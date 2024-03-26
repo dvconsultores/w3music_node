@@ -144,7 +144,7 @@ app.post(
         try {
             const files: any = req.files;
 
-            if (files.cover && files.trackPreview && files.trackFull) {
+            if (files.trackPreview && files.trackFull) {
                 return res.send({ trackPreview: files.trackPreview, trackFull: files.trackFull });
             } else {
                 res.status(400).send();
