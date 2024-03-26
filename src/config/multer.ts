@@ -5,33 +5,33 @@ import { S3Client } from "@aws-sdk/client-s3";
 import multerS3 from "multer-s3";
 
 const s3Config = new S3Client({
-  endpoint: "https://nyc3.digitaloceanspaces.com",
-  region: "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
+    endpoint: "https://nyc3.digitaloceanspaces.com",
+    region: "us-east-1",
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
 });
 
 const upload = multer({
-  storage: multerS3({
-    s3: s3Config,
-    acl: "public-read",
-    bucket: process.env.AWS_STORAGE_BUCKET_NAME!,
-    metadata: function (req: any, file: any, cb: any) {
-      cb(null, { fieldName: file.fieldname });
-    },
-    key: function (req: any, file: any, cb: any) {
-      const fileName = generateFileName(file.originalname, file.fieldname);
-      cb(null, `${fileName}`);
-    },
-  }),
+    storage: multerS3({
+        s3: s3Config,
+        acl: "public-read",
+        bucket: process.env.AWS_STORAGE_BUCKET_NAME!,
+        metadata: function (req: any, file: any, cb: any) {
+            cb(null, { fieldName: file.fieldname });
+        },
+        key: function (req: any, file: any, cb: any) {
+            const fileName = generateFileName(file.originalname, file.fieldname);
+            cb(null, `w3music/${fileName}`);
+        },
+    }),
 });
 
 const generateFileName = (originalFileName: string, fieldname: string) => {
-  const uuid = uuidv4();
-  const extension = originalFileName.split(".").pop();
-  return `${uuid}.${extension}`;
+    const uuid = uuidv4();
+    const extension = originalFileName.split(".").pop();
+    return `${uuid}.${extension}`;
 };
 
 export default { upload };
