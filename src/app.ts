@@ -46,131 +46,133 @@ app.use("/swagger", swaggerUi.serve, swaggerUi.setup(swaggerSetup));
 // });
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, __dirname + "/uploads/");
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + "-" + Date.now() + "." + file.mimetype.split("/")[file.mimetype.split("/").length - 1]);
-  },
+    destination: function (req, file, cb) {
+        cb(null, __dirname + "/uploads/");
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        cb(
+            null,
+            file.fieldname + "-" + Date.now() + "." + file.mimetype.split("/")[file.mimetype.split("/").length - 1]
+        );
+    },
 });
 
 const NFT_STORAGE_KEY = process.env.NFT_STORAGE_KEY;
 async function storeNFT(imagePath: string, name: string, description: string) {
-  // load the file from disk
-  const image = await fileFromPath(imagePath);
+    // load the file from disk
+    const image = await fileFromPath(imagePath);
 
-  // create a new NFTStorage client using our API key
-  const nftstorage = new NFTStorage({ token: NFT_STORAGE_KEY as string });
+    // create a new NFTStorage client using our API key
+    const nftstorage = new NFTStorage({ token: NFT_STORAGE_KEY as string });
 
-  console.log(image);
+    console.log(image);
 
-  // call client.store, passing in the image & metadata
-  return nftstorage.store({
-    image,
-    name,
-    description,
-  });
+    // call client.store, passing in the image & metadata
+    return nftstorage.store({
+        image,
+        name,
+        description,
+    });
 }
 
 function getFileName(filePath: string): string {
-  return filePath.split("/").pop() || "file";
+    return filePath.split("/").pop() || "file";
 }
 
 function getFileType(filePath: string): string {
-  // Implementa lógica para obtener el tipo MIME basado en la extensión del archivo.
-  // Aquí solo se muestran ejemplos para imágenes, audios y videos comunes.
+    // Implementa lógica para obtener el tipo MIME basado en la extensión del archivo.
+    // Aquí solo se muestran ejemplos para imágenes, audios y videos comunes.
 
-  const ext = filePath.split(".").pop()?.toLowerCase() || "";
-  switch (ext) {
-    case "jpg":
-    case "jpeg":
-      return "image/jpeg";
-    case "png":
-      return "image/png";
-    case "gif":
-      return "image/gif";
-    case "mp3":
-      return "audio/mpeg";
-    case "wav":
-      return "audio/wav";
-    case "mp4":
-      return "video/mp4";
-    case "avi":
-      return "video/x-msvideo";
-    default:
-      return "application/octet-stream";
-  }
+    const ext = filePath.split(".").pop()?.toLowerCase() || "";
+    switch (ext) {
+        case "jpg":
+        case "jpeg":
+            return "image/jpeg";
+        case "png":
+            return "image/png";
+        case "gif":
+            return "image/gif";
+        case "mp3":
+            return "audio/mpeg";
+        case "wav":
+            return "audio/wav";
+        case "mp4":
+            return "video/mp4";
+        case "avi":
+            return "video/x-msvideo";
+        default:
+            return "application/octet-stream";
+    }
 }
 
 async function fileFromPath(filePath: string) {
-  const fileData = await fs.promises.readFile(filePath);
-  console.log(fileData);
-  const fileName = getFileName(filePath);
-  const fileType = getFileType(filePath);
+    const fileData = await fs.promises.readFile(filePath);
+    console.log(fileData);
+    const fileName = getFileName(filePath);
+    const fileType = getFileType(filePath);
 
-  return new File([fileData], fileName, { type: fileType });
+    return new File([fileData], fileName, { type: fileType });
 }
 
 const upload = multer({ storage: storage });
 app.post("/api/ipfs/", cors(), upload.single("uploaded_file"), async function (req: any, res: any) {
-  try {
-    if (req.file) {
-      const imagePath = __dirname + "/uploads/" + req.file.filename;
-      const result = await storeNFT(imagePath, req.file.filename, req.file.filename);
-      const path = __dirname + "/uploads/" + req.file.filename;
-      if (fs.existsSync(path)) {
-        fs.unlinkSync(path);
-      }
-      console.log(result);
-      res.json(result);
+    try {
+        if (req.file) {
+            const imagePath = __dirname + "/uploads/" + req.file.filename;
+            const result = await storeNFT(imagePath, req.file.filename, req.file.filename);
+            const path = __dirname + "/uploads/" + req.file.filename;
+            if (fs.existsSync(path)) {
+                fs.unlinkSync(path);
+            }
+            console.log(result);
+            res.json(result);
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).send();
     }
-  } catch (error) {
-    console.log(error);
-    res.status(500).send();
-  }
 });
 
 app.post(
-  "/api/upload/",
-  multerConfig.upload.fields([
-    { name: "cover", maxCount: 1 },
-    { name: "trackPreview", maxCount: 1 },
-    { name: "trackFull", maxCount: 1 },
-  ]),
-  async function (req: any, res: any) {
-    try {
-      const files: any = req.files;
+    "/api/upload/",
+    multerConfig.upload.fields([
+        { name: "trackPreview", maxCount: 1 },
+        { name: "trackFull", maxCount: 1 },
+    ]),
+    async function (req: any, res: any) {
+        try {
+            const files: any = req.files;
 
-      if (files.cover && files.trackPreview && files.trackFull) {
-        return res.send({ cover: files.cover, trackPreview: files.trackPreview, trackFull: files.trackFull });
-      } else {
-        res.status(400).send();
-      }
-    } catch (error) {
-      console.log(error);
-      res.status(500).send();
+            if (files.cover && files.trackPreview && files.trackFull) {
+                return res.send({ trackPreview: files.trackPreview, trackFull: files.trackFull });
+            } else {
+                res.status(400).send();
+            }
+        } catch (error) {
+            console.log(error);
+            res.status(500).send();
+        }
     }
-  },
 );
 
 // dbConnect().then(() => console.log("Conexion DB Ready"));
 
 AppDataSource.initialize().then(() => {
-  console.log("Conexion ORM Ready");
+    console.log("Conexion ORM Ready");
 });
 
 let server;
 
 if (process.env.NODE_ENV === "production") {
-  const credentials = {
-    key: fs.readFileSync("/etc/letsencrypt/live/globaldv.tech/privkey.pem", "utf8"),
-    cert: fs.readFileSync("/etc/letsencrypt/live/globaldv.tech/cert.pem", "utf8"),
-    ca: fs.readFileSync("/etc/letsencrypt/live/globaldv.tech/chain.pem", "utf8"),
-  };
-  server = https.createServer(credentials, app);
+    const credentials = {
+        key: fs.readFileSync("/etc/letsencrypt/live/globaldv.tech/privkey.pem", "utf8"),
+        cert: fs.readFileSync("/etc/letsencrypt/live/globaldv.tech/cert.pem", "utf8"),
+        ca: fs.readFileSync("/etc/letsencrypt/live/globaldv.tech/chain.pem", "utf8"),
+    };
+    server = https.createServer(credentials, app);
 } else {
-  server = http.createServer(app);
+    server = http.createServer(app);
 }
 
 server.listen(PORT, () => console.log(`Listo por el puerto ${PORT}`));
