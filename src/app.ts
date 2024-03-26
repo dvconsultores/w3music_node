@@ -17,6 +17,8 @@ import multer from "multer";
 // Import the NFTStorage class and File constructor from the 'nft.storage' package
 import { NFTStorage, File } from "nft.storage";
 
+import multerConfig from "./config/multer";
+
 const PORT = Number(process.env.PORT) || 3000;
 const app = express();
 
@@ -128,6 +130,29 @@ app.post("/api/ipfs/", cors(), upload.single("uploaded_file"), async function (r
     res.status(500).send();
   }
 });
+
+app.post(
+  "/api/upload/",
+  multerConfig.upload.fields([
+    { name: "cover", maxCount: 1 },
+    { name: "trackPreview", maxCount: 1 },
+    { name: "trackFull", maxCount: 1 },
+  ]),
+  async function (req: any, res: any) {
+    try {
+      const files: any = req.files;
+
+      if (files.cover && files.trackPreview && files.trackFull) {
+        return res.send({ cover: files.cover, trackPreview: files.trackPreview, trackFull: files.trackFull });
+      } else {
+        res.status(400).send();
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).send();
+    }
+  },
+);
 
 // dbConnect().then(() => console.log("Conexion DB Ready"));
 
